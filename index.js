@@ -9,25 +9,16 @@ module.exports = async ({ req, res }) => {
     const storage = new sdk.Storage(client);
 
     try {
-        if (req.method === 'GET') {
-            // لیست فایل‌ها از storage
-            const bucketId = process.env.APPWRITE_BUCKET_ID;
-            const files = await storage.listFiles(bucketId);
-
-            return res.send({
-                message: "فایل‌های موجود در باکت:",
-                fileNames: files.files.map(file => file.name)
-            }, 200);
-        }
+        const bucketId = process.env.APPWRITE_BUCKET_ID;
+        const files = await storage.listFiles(bucketId);
 
         return res.send({
-            message: "فقط درخواست GET پشتیبانی می‌شود."
-        }, 405);
-
+            message: "فایل‌های موجود در باکت:",
+            fileNames: files.files.map(file => file.name)
+        }, 200);
     } catch (error) {
-        console.error('Error:', error);
         return res.send({
-            error: "خطای داخلی سرور",
+            error: "خطا هنگام دریافت فایل‌ها",
             details: error.message
         }, 500);
     }

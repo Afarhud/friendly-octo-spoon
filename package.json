@@ -1,7 +1,9 @@
 {
-  "name": "appwrite-function",
+  "name": "appwrite-function-storage-list",
   "version": "1.0.0",
+  "main": "index.js",
+  "type": "commonjs",
   "dependencies": {
-    "node-appwrite": "^10.0.0"
+    "node-appwrite": "^10.1.0"
   }
 }
