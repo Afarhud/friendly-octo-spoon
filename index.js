@@ -1,7 +1,6 @@
-// نسخه ساده‌تر بدون وابستگی به SDK (استفاده از API مستقیم)
-const axios = require('axios');
+const { Client, Storage } = require('node-appwrite');
 
-module.exports = async ({ req, res, log }) => {
+module.exports = async ({ req, res, log, error }) => {
     try {
         const { fileName, bucketId } = req.body;
         
@@ -9,34 +8,33 @@ module.exports = async ({ req, res, log }) => {
             return res.json({ success: false, message: "پارامترهای نامعتبر" }, 400);
         }
 
-        // تنظیمات Appwrite
-        const APPWRITE_ENDPOINT = process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
-        const PROJECT_ID = process.env.APPWRITE_PROJECT_ID;
-        const API_KEY = process.env.APPWRITE_API_KEY;
+        // Initialize SDK
+        const client = new Client()
+            .setEndpoint('https://cloud.appwrite.io/v1')
+            .setProject(process.env.APPWRITE_PROJECT_ID)
+            .setKey(process.env.APPWRITE_API_KEY);
 
-        // دریافت لیست فایل‌ها از API
-        const response = await axios.get(
-            `${APPWRITE_ENDPOINT}/storage/buckets/${bucketId}/files`,
-            {
-                headers: {
-                    'X-Appwrite-Project': PROJECT_ID,
-                    'X-Appwrite-Key': API_KEY
-                }
-            }
+        const storage = new Storage(client);
+
+        // دریافت لیست فایل‌ها
+        const fileList = await storage.listFiles(bucketId);
+        log(`تمام فایل‌های موجود: ${JSON.stringify(fileList.files.map(f => f.name))}`);
+
+        // جستجوی دقیق
+        const fileExists = fileList.files.some(file => 
+            file.name.toLowerCase() === fileName.toLowerCase()
         );
-
-        const files = response.data.files;
-        const fileExists = files.some(file => file.name === fileName);
 
         return res.json({
             success: true,
             exists: fileExists,
             fileName,
-            bucketId
+            bucketId,
+            availableFiles: fileList.files.map(f => f.name)
         });
 
     } catch (err) {
-        log(`Error: ${err.message}`);
+        error(`خطا: ${err.message}`);
         return res.json({
             success: false,
             error: err.message
