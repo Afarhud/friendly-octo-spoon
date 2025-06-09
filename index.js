@@ -2,10 +2,16 @@ const { Client, Storage } = require('node-appwrite');
 
 module.exports = async ({ req, res, log, error }) => {
     try {
-        const { fileName, bucketId } = req.body;
+        // دریافت پارامترها
+        const { fileName, bucketId } = JSON.parse(req.body || '{}');
         
+        // اعتبارسنجی پارامترها
         if (!fileName || !bucketId) {
-            return res.json({ success: false, message: "پارامترهای نامعتبر" }, 400);
+            error('پارامترهای نامعتبر');
+            return res.json({
+                success: false,
+                message: "پارامترهای fileName و bucketId الزامی هستند"
+            }, 400);
         }
 
         // Initialize SDK
@@ -18,26 +24,27 @@ module.exports = async ({ req, res, log, error }) => {
 
         // دریافت لیست فایل‌ها
         const fileList = await storage.listFiles(bucketId);
-        log(`تمام فایل‌های موجود: ${JSON.stringify(fileList.files.map(f => f.name))}`);
+        log(`تعداد فایل‌های موجود: ${fileList.files.length}`);
 
-        // جستجوی دقیق
-        const fileExists = fileList.files.some(file => 
+        // جستجوی فایل
+        const foundFile = fileList.files.find(file => 
             file.name.toLowerCase() === fileName.toLowerCase()
         );
 
         return res.json({
             success: true,
-            exists: fileExists,
+            exists: !!foundFile,
             fileName,
-            bucketId,
-            availableFiles: fileList.files.map(f => f.name)
+            fileId: foundFile?.$id || null,
+            bucketId
         });
 
     } catch (err) {
-        error(`خطا: ${err.message}`);
+        error(err.stack);
         return res.json({
             success: false,
-            error: err.message
+            error: err.message,
+            stack: err.stack
         }, 500);
     }
 };

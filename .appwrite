@@ -2,11 +2,12 @@
     "name": "check-file-existence",
     "runtime": "node-18.0",
     "entrypoint": "index.js",
+    "commands": [
+        "npm install",
+        "npm install node-appwrite"
+    ],
     "ignore": [
         "README.md",
         ".gitignore"
-    ],
-    "commands": [
-        "npm install"
     ]
 }
