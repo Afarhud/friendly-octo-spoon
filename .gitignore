@@ -1,2 +1,9 @@
-node_modules/
+# فایل‌های محرمانه
 .env
+*.secret
+
+# پایتون
+__pycache__/
+*.py[cod]
+*.so
+.Python
