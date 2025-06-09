@@ -1,34 +1,47 @@
-module.exports = async ({ req, res }) => {
+const { Client, Storage } = require('node-appwrite');
+
+module.exports = async ({ req, res, log, error }) => {
     try {
-        // برای درخواست‌های GET
-        if (req.method === 'GET') {
-            return res.send({
-                message: "این یک پاسخ تستی از Appwrite است!",
-                receivedData: req.query || {}
-            }, 200);
+        // دریافت نام فایل از بدنه درخواست
+        const { fileName, bucketId } = req.body;
+        
+        if (!fileName || !bucketId) {
+            return res.json({
+                success: false,
+                message: "پارامترهای fileName و bucketId الزامی هستند"
+            }, 400);
         }
 
-        // برای درخواست‌های POST
-        if (req.method === 'POST') {
-            return res.send({
-                message: "داده‌های POST دریافت شد!",
-                receivedData: req.body || {}
-            }, 200);
-        }
+        // Initialize SDK
+        const client = new Client()
+            .setEndpoint('https://cloud.appwrite.io/v1') // یا آدرس محل نصب Appwrite شما
+            .setProject(process.env.APPWRITE_PROJECT_ID) // از متغیرهای محیطی
+            .setKey(process.env.APPWRITE_API_KEY); // از متغیرهای محیطی
 
-        // برای سایر متدها
-        return res.send({
-            message: "سلام از تابع Appwrite!",
-            method: req.method,
-            query: req.query || {},
-            body: req.body || {}
-        }, 200);
+        const storage = new Storage(client);
 
-    } catch (error) {
-        console.error('Error:', error);
-        return res.send({
-            error: "خطای داخلی سرور",
-            details: error.message
+        // جستجوی فایل در Bucket
+        const fileList = await storage.listFiles(bucketId, {
+            search: fileName
+        });
+
+        const fileExists = fileList.files.some(file => file.name === fileName);
+
+        return res.json({
+            success: fileExists,
+            message: fileExists 
+                ? "فایل یافت شد" 
+                : "فایل وجود ندارد",
+            fileName,
+            bucketId
+        });
+
+    } catch (err) {
+        error(err.message);
+        return res.json({
+            success: false,
+            message: "خطا در پردازش درخواست",
+            error: err.message
         }, 500);
     }
 };
