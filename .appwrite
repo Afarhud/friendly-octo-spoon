@@ -1,0 +1,10 @@
+{
+    "name": "test-function",
+    "runtime": "node-18.0",
+    "entrypoint": "index.js",
+    "ignore": [
+        "README.md",
+        ".gitignore",
+        "client.py"
+    ]
+}
