@@ -1,50 +1,34 @@
-const { Client, Storage } = require('node-appwrite');
+const sdk = require('node-appwrite');
 
-module.exports = async ({ req, res, log, error }) => {
+module.exports = async ({ req, res }) => {
+    const client = new sdk.Client()
+        .setEndpoint(process.env.APPWRITE_ENDPOINT)
+        .setProject(process.env.APPWRITE_PROJECT_ID)
+        .setKey(process.env.APPWRITE_API_KEY);
+
+    const storage = new sdk.Storage(client);
+
     try {
-        // دریافت پارامترها
-        const { fileName, bucketId } = JSON.parse(req.body || '{}');
-        
-        // اعتبارسنجی پارامترها
-        if (!fileName || !bucketId) {
-            error('پارامترهای نامعتبر');
-            return res.json({
-                success: false,
-                message: "پارامترهای fileName و bucketId الزامی هستند"
-            }, 400);
+        if (req.method === 'GET') {
+            // لیست فایل‌ها از storage
+            const bucketId = process.env.APPWRITE_BUCKET_ID;
+            const files = await storage.listFiles(bucketId);
+
+            return res.send({
+                message: "فایل‌های موجود در باکت:",
+                fileNames: files.files.map(file => file.name)
+            }, 200);
         }
 
-        // Initialize SDK
-        const client = new Client()
-            .setEndpoint('https://cloud.appwrite.io/v1')
-            .setProject(process.env.APPWRITE_PROJECT_ID)
-            .setKey(process.env.APPWRITE_API_KEY);
+        return res.send({
+            message: "فقط درخواست GET پشتیبانی می‌شود."
+        }, 405);
 
-        const storage = new Storage(client);
-
-        // دریافت لیست فایل‌ها
-        const fileList = await storage.listFiles(bucketId);
-        log(`تعداد فایل‌های موجود: ${fileList.files.length}`);
-
-        // جستجوی فایل
-        const foundFile = fileList.files.find(file => 
-            file.name.toLowerCase() === fileName.toLowerCase()
-        );
-
-        return res.json({
-            success: true,
-            exists: !!foundFile,
-            fileName,
-            fileId: foundFile?.$id || null,
-            bucketId
-        });
-
-    } catch (err) {
-        error(err.stack);
-        return res.json({
-            success: false,
-            error: err.message,
-            stack: err.stack
+    } catch (error) {
+        console.error('Error:', error);
+        return res.send({
+            error: "خطای داخلی سرور",
+            details: error.message
         }, 500);
     }
 };
