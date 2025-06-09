@@ -1,10 +1,12 @@
 {
-  "name": "check-file-existence",
-  "runtime": "node-22.0",
-  "entrypoint": "index.js",
-  "commands": [],
-  "ignore": [
-    "README.md",
-    ".gitignore"
-  ]
+    "name": "file-checker",
+    "runtime": "node-18.0",
+    "entrypoint": "index.js",
+    "commands": [
+        "npm install"
+    ],
+    "ignore": [
+        "README.md",
+        ".gitignore"
+    ]
 }
