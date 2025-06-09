@@ -1,6 +1,7 @@
-const { Client, Storage } = require('node-appwrite');
+// نسخه ساده‌تر بدون وابستگی به SDK (استفاده از API مستقیم)
+const axios = require('axios');
 
-module.exports = async ({ req, res, log, error }) => {
+module.exports = async ({ req, res, log }) => {
     try {
         const { fileName, bucketId } = req.body;
         
@@ -8,47 +9,37 @@ module.exports = async ({ req, res, log, error }) => {
             return res.json({ success: false, message: "پارامترهای نامعتبر" }, 400);
         }
 
-        const client = new Client()
-            .setEndpoint('https://cloud.appwrite.io/v1')
-            .setProject(process.env.APPWRITE_PROJECT_ID)
-            .setKey(process.env.APPWRITE_API_KEY);
+        // تنظیمات Appwrite
+        const APPWRITE_ENDPOINT = process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
+        const PROJECT_ID = process.env.APPWRITE_PROJECT_ID;
+        const API_KEY = process.env.APPWRITE_API_KEY;
 
-        const storage = new Storage(client);
-
-        // دیباگ: لیست همه فایل‌ها
-        const allFiles = await storage.listFiles(bucketId);
-        log(`تمام فایل‌های موجود: ${JSON.stringify(allFiles.files.map(f => f.name))}`);
-
-        // جستجوی دقیق
-        const exactFile = allFiles.files.find(file => 
-            file.name.toLowerCase() === fileName.toLowerCase()
+        // دریافت لیست فایل‌ها از API
+        const response = await axios.get(
+            `${APPWRITE_ENDPOINT}/storage/buckets/${bucketId}/files`,
+            {
+                headers: {
+                    'X-Appwrite-Project': PROJECT_ID,
+                    'X-Appwrite-Key': API_KEY
+                }
+            }
         );
 
-        if (exactFile) {
-            log(`فایل یافت شد: ${exactFile.name} (ID: ${exactFile.$id})`);
-            return res.json({
-                success: true,
-                exists: true,
-                fileId: exactFile.$id,
-                fileName: exactFile.name,
-                size: exactFile.size
-            });
-        }
+        const files = response.data.files;
+        const fileExists = files.some(file => file.name === fileName);
 
         return res.json({
             success: true,
-            exists: false,
-            message: "فایل با این نام یافت نشد",
-            searchedFileName: fileName,
-            availableFiles: allFiles.files.map(f => f.name)
+            exists: fileExists,
+            fileName,
+            bucketId
         });
 
     } catch (err) {
-        error(`خطا: ${err.message}`);
+        log(`Error: ${err.message}`);
         return res.json({
             success: false,
-            error: err.message,
-            stack: err.stack
+            error: err.message
         }, 500);
     }
 };

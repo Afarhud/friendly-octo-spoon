@@ -1,10 +1,12 @@
 {
-    "name": "test-function",
+    "name": "check-file-existence",
     "runtime": "node-18.0",
     "entrypoint": "index.js",
     "ignore": [
         "README.md",
-        ".gitignore",
-        "client.py"
+        ".gitignore"
+    ],
+    "commands": [
+        "npm install"
     ]
 }
