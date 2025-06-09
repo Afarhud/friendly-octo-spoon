@@ -2,46 +2,53 @@ const { Client, Storage } = require('node-appwrite');
 
 module.exports = async ({ req, res, log, error }) => {
     try {
-        // دریافت نام فایل از بدنه درخواست
         const { fileName, bucketId } = req.body;
         
         if (!fileName || !bucketId) {
-            return res.json({
-                success: false,
-                message: "پارامترهای fileName و bucketId الزامی هستند"
-            }, 400);
+            return res.json({ success: false, message: "پارامترهای نامعتبر" }, 400);
         }
 
-        // Initialize SDK
         const client = new Client()
-            .setEndpoint('https://cloud.appwrite.io/v1') // یا آدرس محل نصب Appwrite شما
-            .setProject(process.env.APPWRITE_PROJECT_ID) // از متغیرهای محیطی
-            .setKey(process.env.APPWRITE_API_KEY); // از متغیرهای محیطی
+            .setEndpoint('https://cloud.appwrite.io/v1')
+            .setProject(process.env.APPWRITE_PROJECT_ID)
+            .setKey(process.env.APPWRITE_API_KEY);
 
         const storage = new Storage(client);
 
-        // جستجوی فایل در Bucket
-        const fileList = await storage.listFiles(bucketId, {
-            search: fileName
-        });
+        // دیباگ: لیست همه فایل‌ها
+        const allFiles = await storage.listFiles(bucketId);
+        log(`تمام فایل‌های موجود: ${JSON.stringify(allFiles.files.map(f => f.name))}`);
 
-        const fileExists = fileList.files.some(file => file.name === fileName);
+        // جستجوی دقیق
+        const exactFile = allFiles.files.find(file => 
+            file.name.toLowerCase() === fileName.toLowerCase()
+        );
+
+        if (exactFile) {
+            log(`فایل یافت شد: ${exactFile.name} (ID: ${exactFile.$id})`);
+            return res.json({
+                success: true,
+                exists: true,
+                fileId: exactFile.$id,
+                fileName: exactFile.name,
+                size: exactFile.size
+            });
+        }
 
         return res.json({
-            success: fileExists,
-            message: fileExists 
-                ? "فایل یافت شد" 
-                : "فایل وجود ندارد",
-            fileName,
-            bucketId
+            success: true,
+            exists: false,
+            message: "فایل با این نام یافت نشد",
+            searchedFileName: fileName,
+            availableFiles: allFiles.files.map(f => f.name)
         });
 
     } catch (err) {
-        error(err.message);
+        error(`خطا: ${err.message}`);
         return res.json({
             success: false,
-            message: "خطا در پردازش درخواست",
-            error: err.message
+            error: err.message,
+            stack: err.stack
         }, 500);
     }
 };
