@@ -1,7 +1,9 @@
 {
-  "name": "appwrite-file-checker",
+  "name": "pattern-detection-function",
   "version": "1.0.0",
   "dependencies": {
-    "node-appwrite": "^10.0.0"
+    "node-appwrite": "^10.0.0",
+    "opencv-wasm": "^4.5.2-1",
+    "canvas": "^2.11.2"
   }
 }

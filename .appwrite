@@ -1,12 +1,14 @@
 {
-    "name": "file-checker",
+    "name": "pattern-detection",
     "runtime": "node-18.0",
-    "entrypoint": "index.js",
+    "entrypoint": "pattern_detection.js",
     "commands": [
         "npm install"
     ],
     "ignore": [
-        "README.md",
         ".gitignore"
-    ]
+    ],
+    "environmentVariables": {
+        "DEBUG": "true"
+    }
 }
